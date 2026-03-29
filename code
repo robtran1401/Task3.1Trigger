@@ -1,0 +1,72 @@
+#include <Wire.h>
+#include <BH1750.h>
+#include <SPI.h>
+#include <WiFiNINA.h>
+
+BH1750 lightMeter;
+WiFiSSLClient client;
+
+// WIFI 
+char ssid[] = "Optus_8D9EDB";
+char pass[] = "subahwackeUFaXf";
+
+// IFTTT 
+const char host[] = "maker.ifttt.com";
+const int httpsPort = 443;
+const char key[] = "d7CT2TZ2Y27FjFNJVtDlmL";
+
+bool sunlight = false;
+
+void setup() {
+  Serial.begin(9600);
+  delay(1500);
+
+  Wire.begin();
+  lightMeter.begin();
+
+  Serial.print("Connecting to WiFi");
+  while (WiFi.begin(ssid, pass) != WL_CONNECTED) {
+    Serial.print(".");
+    delay(3000);
+  }
+  Serial.println("\nWiFi connected");
+}
+
+void loop() {
+  float lux = lightMeter.readLightLevel();
+
+  Serial.print("Light: ");
+  Serial.print(lux);
+  Serial.println(" lx");
+
+// change if needed, depend on the environment
+  if (lux > 20 && sunlight == false) {
+    sunlight = true;
+    sendToIFTTT("sunlight_on", lux);
+  }
+
+  if (lux < 10 && sunlight == true) {
+    sunlight = false;
+    sendToIFTTT("sunlight_off", lux);
+  }
+
+  delay(3000);
+}
+
+void sendToIFTTT(String eventName, float lux) {
+  String url = "/trigger/" + eventName + "/with/key/" + key + "?value1=" + String(lux);
+
+  if (client.connect(host, 443)) {
+    client.println("GET " + url + " HTTP/1.1");
+    client.println("Host: maker.ifttt.com");
+    client.println("Connection: close");
+    client.println();
+
+    Serial.print("Sent to IFTTT: ");
+    Serial.println(eventName);
+  } else {
+    Serial.println("IFTTT connection failed");
+  }
+
+  client.stop();
+}
