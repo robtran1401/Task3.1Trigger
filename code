@@ -7,8 +7,8 @@ BH1750 lightMeter;
 WiFiSSLClient client;
 
 // WIFI 
-char ssid[] = "Optus_8D9EDB";
-char pass[] = "subahwackeUFaXf";
+char ssid[] = "wifi";
+char pass[] = "password";
 
 // IFTTT 
 const char host[] = "maker.ifttt.com";
